@@ -12,12 +12,12 @@ def simulate(n, t):#n * n 격자에 대해 t회 시뮬레이션
     ids = []
     size = []   # size[i]: size of tree rooted at i
     
-    for idx in range(N):    
-        ids.append(idx)
-        size.append(1)
+    
+        
 
     def root(i):
-        while i != ids[i]: i = ids[i]
+        if i != ids[i]:
+            i = root(ids[i])
         return i
 
     def connected(p, q):
@@ -34,24 +34,46 @@ def simulate(n, t):#n * n 격자에 대해 t회 시뮬레이션
             size[id1] += size[id2]
 
     
-    v = [i for i in range(0, n) ]#정점 저장
-    wallsToOpen_set = set(sorted(v, v1) for v1 in v if (abs(v - v1) == 1 or abs(v - v1) == n) and v1 >= 0)
-    print(wallsToOpen)
+    
+    v = [i for i in range(0, n * n) ]#정점 저장
+    wallsToOpen_set = set()
+    
+    for v1 in v:
+        for v2 in v:
+            if v1 < v2:  # 중복 방지
+                # 가로로 인접 (같은 행에서 차이가 1)
+                if abs(v1 - v2) == 1 and v1 // n == v2 // n:
+                    wallsToOpen_set.add((v1, v2))
+                # 세로로 인접 (같은 열에서 차이가 n)
+                elif abs(v1 - v2) == n:
+                    wallsToOpen_set.add((v1, v2))
+
     #벽 목록, abs로 차이가 1 혹은 N인 경우 set생성
-    removed_walls = []
+   
+    walls_count = list()
     
     for i in range(t):
-        wallsToOpen = list(wallsToOpen) 
+
+        ids = [_ for _ in range(N)]
+        size = [1 for _ in range(N)]
+        walls_count_temp = 0
+        removed_walls = []
+        wallsToOpen = list(wallsToOpen_set) 
         random.shuffle(wallsToOpen)
-        while connected(0, n * n - 1) == False: #n = 3이라면, 0 이랑 8 이 연결되지 않는 한 계속!
+        while connected(0, n * n - 1) == False and wallsToOpen: #n = 3이라면, 0 이랑 8 이 연결되지 않는 한 계속!
             
-            tempwall = wallsToOpen.pop
-            tempids = [x for x in ids]
-            union(tempwall[0], tempwall[1])
-            if ids == tempids:
+            tempwall = wallsToOpen.pop()#랜덤하게 켜플된 벽에서 끝부분 pop < 끝부분이여도 상관 x
+            
+            root1, root2 = root(tempwall[0]), root(tempwall[1])
+            if root1 != root2:  # 두개가 끊겨있던건가?
+                union(tempwall[0], tempwall[1])#그렇다면 연결
+                removed_walls.append(tempwall)
+                walls_count_temp += 1
+            else:#상태가 똑같다면
                 pass
-            else:
-                
+            
+        
+        walls_count.append(walls_count_temp/ len(wallsToOpen_set))
     
     
         
@@ -60,11 +82,31 @@ def simulate(n, t):#n * n 격자에 대해 t회 시뮬레이션
   
     
     
-     
 
-    return statistics.mean(), statistics.stdev(), removed_walls
+    return statistics.mean(walls_count), statistics.stdev(walls_count), removed_walls
 
+'''
+Simulate the performance of Quick Find
+'''
+def simulateQF(n, t):
+    def connected(p, q):        
+        return ids[p] == ids[q]
 
+    def minMax(a, b):
+        if a < b: return a, b
+        else: return b, a
+
+    def union(p, q):        
+        id1, id2 = minMax(ids[p], ids[q])
+        for idx, _ in enumerate(ids):
+            if ids[idx] == id2: ids[idx] = id1
+    
+    for _ in range(t):
+        numCells, numWalls = n * n, int(1.2 * n * (n - 1))
+        ids = [i for i in range(numCells)]
+        for _ in range(numWalls):
+            union(random.randint(0, len(ids)-1), random.randint(0, len(ids)-1))
+            connected(0, numCells - 1)
 
 '''
 Verify the maze maze 검증하기
