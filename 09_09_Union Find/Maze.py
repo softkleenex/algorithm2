@@ -16,9 +16,10 @@ def simulate(n, t):#n * n 격자에 대해 t회 시뮬레이션
         
 
     def root(i):
-        if i != ids[i]:
-            i = root(ids[i])
+        while i != ids[i]:
+            i = ids[i]
         return i
+
 
     def connected(p, q):
         return root(p) == root(q)
@@ -128,7 +129,7 @@ def verify(n, selectedWalls):
     illegalVertices = []
     for id1, id2 in selectedWalls:
         minID, maxID = minMax(id1, id2)
-        if maxID >= n * n or minID < 0: illegalVertices.append((id1, id2))
+        if maxID >= n * n or minID < 0: illegalVertices.append((id1, id2))  
         if minID + 1 == maxID and minID % n < n - 1: continue
         elif minID + n == maxID and minID < n * (n - 1): continue
         else: illegalConnections.append((id1, id2))        
